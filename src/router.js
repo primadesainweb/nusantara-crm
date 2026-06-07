@@ -11,6 +11,7 @@ const ROUTES = {
   '/jamaah':        { title: 'Jamaah',     module: () => import('./modules/jamaah/index.js') },
   '/jamaah/new':    { title: 'Jamaah Baru', module: () => import('./modules/jamaah/form.js') },
   '/jamaah/:id':    { title: 'Detail Jamaah', module: () => import('./modules/jamaah/detail.js') },
+  '/jamaah/:id/edit': { title: 'Edit Jamaah', module: () => import('./modules/jamaah/edit.js') },
   '/paket':         { title: 'Paket',       module: () => import('./modules/paket/index.js') },
   '/pembayaran':    { title: 'Pembayaran',  module: () => import('./modules/pembayaran/index.js') },
   '/dokumen':       { title: 'Dokumen',     module: () => import('./modules/dokumen/index.js') },
