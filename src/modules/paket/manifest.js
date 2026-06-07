@@ -1,5 +1,5 @@
 /**
- * Paket Manifest View (T-25) - Manifest per paket
+ * Paket Manifest View (T-38) - Improved with grouping by tipe kamar
  */
 import api from '../../api/api.js'
 import { formatRupiah, formatDate, showToast } from '../../utils/helpers.js'
@@ -64,6 +64,17 @@ export default class PaketManifestView {
     return { label: 'Pending', class: 'badge-warning' }
   }
 
+  // Group jamaahs by tipe kamar
+  groupByTipeKamar() {
+    const groups = {}
+    this.jamaahs.forEach(j => {
+      const tipe = j.tipeKamar || 'Lainnya'
+      if (!groups[tipe]) groups[tipe] = []
+      groups[tipe].push(j)
+    })
+    return groups
+  }
+
   render() {
     const p = this.paket
 
@@ -75,6 +86,9 @@ export default class PaketManifestView {
       const status = this.getDokumenStatus(j.id)
       return status.label === 'Lengkap'
     }).length
+
+    // Group by tipe kamar
+    const groupedJamaahs = this.groupByTipeKamar()
 
     this.el.innerHTML = `
       <div class="space-y-6">
@@ -90,9 +104,13 @@ export default class PaketManifestView {
             <p class="text-gray-500 text-sm">${p.nama} - ${formatDate(p.tanggalBerangkat, 'DD MMM YYYY')}</p>
           </div>
           <div class="flex gap-2">
-            <button id="btn-export-pdf" class="btn-secondary">
+            <button id="btn-export-pdf" class="btn-primary">
               <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               Export PDF
+            </button>
+            <button id="btn-print" class="btn-secondary">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Print
             </button>
           </div>
         </div>
@@ -117,54 +135,54 @@ export default class PaketManifestView {
           </div>
         </div>
 
-        <!-- Table -->
-        <div class="card overflow-hidden">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Nama Jama'ah</th>
-                <th>NIK</th>
-                <th>No. Passport</th>
-                <th>Tipe Kamar</th>
-                <th>Kontak Darurat</th>
-                <th>Status Dokumen</th>
-                <th>Status Bayar</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${this.jamaahs.map((j, i) => {
-                const docs = this.dokumenMap[j.id] || []
-                const passport = docs.find(d => d.jenis === 'Passport')
-                const docStatus = this.getDokumenStatus(j.id)
-                const bayarStatus = this.getBayarStatus(this.pembayaranMap[j.id])
+        <!-- Grouped by Tipe Kamar -->
+        ${Object.entries(groupedJamaahs).map(([tipe, jamaats]) => `
+          <div class="card overflow-hidden">
+            <div class="p-4 bg-gray-50 border-b">
+              <h3 class="font-semibold text-gray-800 capitalize">${tipe} - ${jamaats.length} Jama'ah</h3>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Jama'ah</th>
+                  <th>NIK</th>
+                  <th>No. Passport</th>
+                  <th>Kontak Darurat</th>
+                  <th>HP Darurat</th>
+                  <th>Status Dokumen</th>
+                  <th>Status Bayar</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${jamaats.map((j, i) => {
+                  const docs = this.dokumenMap[j.id] || []
+                  const passport = docs.find(d => d.jenis === 'Passport')
+                  const docStatus = this.getDokumenStatus(j.id)
+                  const bayarStatus = this.getBayarStatus(this.pembayaranMap[j.id])
 
-                return `
-                  <tr class="${i % 2 === 0 ? 'bg-gray-50' : ''}">
-                    <td>${i + 1}</td>
-                    <td>
-                      <div>
-                        <p class="font-medium">${j.nama}</p>
-                        <p class="text-xs text-gray-400">${j.noJamaah || ''}</p>
-                      </div>
-                    </td>
-                    <td class="font-mono text-sm">${j.nik || '-'}</td>
-                    <td class="font-mono text-sm">${passport?.namaFile ? passport.namaFile.replace(/[^A-Z0-9]/gi, '').substring(0, 9) : '-'}</td>
-                    <td class="capitalize">${j.tipeKamar || '-'}</td>
-                    <td>
-                      <div>
-                        <p class="text-sm">${j.kontakDarurat || '-'}</p>
-                        <p class="text-xs text-gray-400">${j.hpDarurat || '-'}</p>
-                      </div>
-                    </td>
-                    <td><span class="badge ${docStatus.class}">${docStatus.label}</span></td>
-                    <td><span class="badge ${bayarStatus.class}">${bayarStatus.label}</span></td>
-                  </tr>
-                `
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
+                  return `
+                    <tr class="${i % 2 === 0 ? 'bg-gray-50' : ''}">
+                      <td>${i + 1}</td>
+                      <td>
+                        <div>
+                          <p class="font-medium">${j.nama}</p>
+                          <p class="text-xs text-gray-400">${j.noJamaah || ''}</p>
+                        </div>
+                      </td>
+                      <td class="font-mono text-sm">${j.nik || '-'}</td>
+                      <td class="font-mono text-sm">${passport?.namaFile ? passport.namaFile.replace(/[^A-Z0-9]/gi, '').substring(0, 9) : '-'}</td>
+                      <td class="text-sm">${j.kontakDarurat || '-'}</td>
+                      <td class="text-sm">${j.hpDarurat || '-'}</td>
+                      <td><span class="badge ${docStatus.class}">${docStatus.label}</span></td>
+                      <td><span class="badge ${bayarStatus.class}">${bayarStatus.label}</span></td>
+                    </tr>
+                  `
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `).join('')}
 
         <!-- Empty state -->
         ${this.jamaahs.length === 0 ? `
@@ -182,6 +200,7 @@ export default class PaketManifestView {
 
   attachEvents() {
     document.getElementById('btn-export-pdf')?.addEventListener('click', () => this.exportPDF())
+    document.getElementById('btn-print')?.addEventListener('click', () => this.printManifest())
   }
 
   async exportPDF() {
@@ -190,87 +209,138 @@ export default class PaketManifestView {
     const doc = new jsPDF('l', 'mm', 'a4') // landscape
     const p = this.paket
 
-    // Title
+    // Company Header
+    doc.setFillColor(13, 124, 102) // primary green
+    doc.rect(0, 0, 297, 25, 'F')
+    
+    doc.setTextColor(255, 255, 255)
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
-    doc.text('MANIFEST JAMAAH', 148, 15, { align: 'center' })
-
+    doc.text('NUSANTARA TRAVEL', 148, 10, { align: 'center' })
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
-    doc.text(`${p.nama}`, 148, 22, { align: 'center' })
-    doc.text(`Berangkat: ${formatDate(p.tanggalBerangkat, 'DD MMMM YYYY')} - Kembali: ${formatDate(p.tanggalKembali, 'DD MMMM YYYY')}`, 148, 28, { align: 'center' })
+    doc.text('Manifest Jamaah - ' + p.nama, 148, 17, { align: 'center' })
 
-    // Table header
-    const headers = ['No', 'Nama', 'NIK', 'Passport', 'Kamar', 'Kontak Darurat', 'HP Darurat', 'Dokumen', 'Bayar']
-    const colWidths = [12, 45, 35, 30, 20, 40, 30, 25, 20]
-    let y = 38
-
-    doc.setFillColor(13, 124, 102) // primary green
-    doc.rect(10, y - 5, 277, 8, 'F')
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'bold')
-
-    let x = 12
-    headers.forEach((h, i) => {
-      doc.text(h, x, y)
-      x += colWidths[i]
-    })
-
-    // Table body
+    // Sub header info
     doc.setTextColor(0, 0, 0)
-    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(`Berangkat: ${formatDate(p.tanggalBerangkat, 'DD MMMM YYYY')} - Kembali: ${formatDate(p.tanggalKembali, 'DD MMMM YYYY')}`, 148, 32, { align: 'center' })
+    doc.text(`Hotel: ${p.hotel} | Maskapai: ${p.maskapai}`, 148, 37, { align: 'center' })
 
-    this.jamaahs.forEach((j, i) => {
-      y += 7
-      if (y > 190) {
+    // Group by tipe kamar
+    const groupedJamaahs = this.groupByTipeKamar()
+    let yPos = 45
+
+    Object.entries(groupedJamaahs).forEach(([tipe, jamaats]) => {
+      // Check if we need a new page
+      if (yPos > 180) {
         doc.addPage()
-        y = 20
+        yPos = 20
       }
 
-      const docs = this.dokumenMap[j.id] || []
-      const passport = docs.find(d => d.jenis === 'Passport')
-      const docStatus = this.getDokumenStatus(j.id)
-      const bayarStatus = this.getBayarStatus(this.pembayaranMap[j.id])
+      // Group header
+      doc.setFillColor(240, 240, 240)
+      doc.rect(10, yPos - 4, 277, 7, 'F')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.text(`${tipe.toUpperCase()} - ${jamaats.length} Jamaah`, 12, yPos)
+      yPos += 8
 
-      x = 12
-      const row = [
-        String(i + 1),
-        j.nama || '-',
-        j.nik || '-',
-        passport?.namaFile ? 'Ada' : '-',
-        j.tipeKamar || '-',
-        j.kontakDarurat || '-',
-        j.hpDarurat || '-',
-        docStatus.label,
-        bayarStatus.label,
-      ]
+      // Table header
+      doc.setFillColor(13, 124, 102)
+      doc.rect(10, yPos - 4, 277, 6, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'bold')
 
-      row.forEach((cell, j) => {
-        doc.text(cell.substring(0, 30), x, y)
-        x += colWidths[j]
+      const headers = ['No', 'Nama', 'NIK', 'Passport', 'Kontak Darurat', 'HP Darurat', 'Dok', 'Bayar']
+      const colWidths = [10, 50, 35, 30, 45, 35, 25, 25]
+      let xPos = 12
+
+      headers.forEach((h, i) => {
+        doc.text(h, xPos, yPos)
+        xPos += colWidths[i]
+      })
+      yPos += 5
+
+      // Table body
+      doc.setTextColor(0, 0, 0)
+      doc.setFont('helvetica', 'normal')
+
+      jamaats.forEach((j, i) => {
+        if (yPos > 185) {
+          doc.addPage()
+          yPos = 20
+        }
+
+        const docs = this.dokumenMap[j.id] || []
+        const passport = docs.find(d => d.jenis === 'Passport')
+        const docStatus = this.getDokumenStatus(j.id)
+        const bayarStatus = this.getBayarStatus(this.pembayaranMap[j.id])
+
+        // Alternate row background
+        if (i % 2 === 0) {
+          doc.setFillColor(250, 250, 250)
+          doc.rect(10, yPos - 3, 277, 5, 'F')
+        }
+
+        xPos = 12
+        const row = [
+          String(i + 1),
+          (j.nama || '-').substring(0, 25),
+          j.nik ? String(j.nik).substring(0, 16) : '-',
+          passport ? 'Ada' : '-',
+          (j.kontakDarurat || '-').substring(0, 25),
+          j.hpDarurat || '-',
+          docStatus.label,
+          bayarStatus.label
+        ]
+
+        row.forEach((cell, j) => {
+          doc.text(String(cell).substring(0, 20), xPos, yPos)
+          xPos += colWidths[j]
+        })
+
+        yPos += 5
       })
 
-      // Alternate row background
-      if (i % 2 === 0) {
-        doc.setFillColor(245, 245, 245)
-        doc.rect(10, y - 4, 277, 6, 'F')
-        // Re-draw text
-        doc.setTextColor(0, 0, 0)
-        x = 12
-        row.forEach((cell, j) => {
-          doc.text(cell.substring(0, 30), x, y)
-          x += colWidths[j]
-        })
-      }
+      yPos += 5 // Gap between groups
     })
 
     // Footer
-    doc.setFontSize(8)
+    doc.setFontSize(7)
     doc.setTextColor(150)
     doc.text(`Dicetak: ${formatDate(new Date(), 'DD MMMM YYYY HH:mm')} - Nusantara CRM`, 148, 200, { align: 'center' })
 
     doc.save(`Manifest_${p.id}_${formatDate(new Date(), 'YYYYMMDD')}.pdf`)
     showToast('Manifest berhasil diunduh!', 'success')
+  }
+
+  printManifest() {
+    // Get the manifest content and open print dialog
+    const printContent = this.el.innerHTML
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Manifest - ${this.paket.nama}</title>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2/dist/tailwind.min.css">
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            @media print {
+              .no-print { display: none !important; }
+              .card { border: 1px solid #e5e7eb; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 12px; }
+              th { background: #0D7C66; color: white; }
+            }
+          </style>
+        </head>
+        <body>${printContent}</body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
   }
 }
