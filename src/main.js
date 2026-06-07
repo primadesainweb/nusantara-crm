@@ -5,19 +5,20 @@
 import { initRouter } from './router.js'
 import { state } from './state.js'
 import { showToast } from './utils/helpers.js'
+import { logout } from './modules/auth/login.js'
 
 // ─── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('�起来了 — Nusantara CRM initializing...')
+
+  // Hydrate state from localStorage (auth, preferences) first
+  state.hydrate()
 
   // Render app shell (sidebar + header + router outlet)
   renderAppShell()
 
   // Initialize hash-based SPA router
   initRouter()
-
-  // Hydrate state from localStorage (auth, preferences)
-  state.hydrate()
 
   console.log('✅ CRM ready')
 })
@@ -87,6 +88,10 @@ const ICONS = {
 }
 
 function renderSidebar() {
+  const user = state.user
+  const initials = user?.name ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?'
+  const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Staff'
+
   return `
     <!-- Logo -->
     <div class="flex items-center gap-3 px-4 h-16 border-b border-gray-100 shrink-0">
@@ -115,18 +120,26 @@ function renderSidebar() {
     <div class="border-t border-gray-100 p-4 shrink-0">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-          <span class="text-primary-600 text-xs font-semibold">AR</span>
+          <span class="text-primary-600 text-xs font-semibold">${initials}</span>
         </div>
         <div class="flex-1 min-w-0">
-          <div class="text-sm font-medium text-gray-800 truncate">Ahmad Rizal</div>
-          <div class="text-xs text-gray-400 truncate">Administrator</div>
+          <div class="text-sm font-medium text-gray-800 truncate">${user?.name || 'Guest'}</div>
+          <div class="text-xs text-gray-400 truncate">${roleLabel}</div>
         </div>
+        <button id="sidebar-logout-btn" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Keluar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+        </button>
       </div>
     </div>
   `
 }
 
 function renderHeader() {
+  const user = state.user
+  const initials = user?.name ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?'
+
   return `
     <!-- Mobile menu button -->
     <button id="sidebar-toggle" class="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100">
@@ -141,7 +154,7 @@ function renderHeader() {
     <!-- Global Search -->
     <div class="hidden sm:flex items-center relative">
       <span class="absolute left-3 text-gray-400 pointer-events-none">${ICONS.search}</span>
-      <input type="text" id="global-search" placeholder="Cari Jamaah, Paket..." 
+      <input type="text" id="global-search" placeholder="Cari Jamaah, Paket..."
              class="form-input pl-9 w-64 text-sm bg-gray-50 border-gray-200 focus:bg-white" />
     </div>
 
@@ -157,14 +170,42 @@ function renderHeader() {
       <span id="notif-badge" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
     </button>
 
+    <!-- Dark Mode Toggle -->
+    <button id="dark-mode-toggle" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100" title="Mode gelap">
+      <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+      </svg>
+      <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+      </svg>
+    </button>
+
     <!-- User Menu -->
     <div class="relative">
       <button id="user-menu-btn" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100">
         <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-          <span class="text-primary-600 text-xs font-semibold">AR</span>
+          <span class="text-primary-600 text-xs font-semibold">${initials}</span>
         </div>
         <svg class="w-4 h-4 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
+      <!-- Dropdown -->
+      <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+        <div class="px-4 py-2 border-b border-gray-100">
+          <p class="text-sm font-medium text-gray-900">${user?.name || 'Guest'}</p>
+          <p class="text-xs text-gray-500">${user?.email || ''}</p>
+        </div>
+        <a href="#/pengaturan" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          <span class="inline-flex items-center gap-2">${ICONS.settings} Pengaturan</span>
+        </a>
+        <button id="header-logout-btn" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+          <span class="inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Keluar
+          </span>
+        </button>
+      </div>
     </div>
   `
 }
@@ -215,6 +256,49 @@ function attachSidebarListeners() {
       if (q) window.location.hash = `#/jamaah?q=${encodeURIComponent(q)}`
     }
   }, 300))
+
+  // User dropdown menu toggle
+  const userMenuBtn = document.getElementById('user-menu-btn')
+  const userDropdown = document.getElementById('user-dropdown')
+  userMenuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    userDropdown?.classList.toggle('hidden')
+  })
+  document.addEventListener('click', () => {
+    userDropdown?.classList.add('hidden')
+  })
+  userDropdown?.addEventListener('click', (e) => e.stopPropagation())
+
+  // Header logout button
+  document.getElementById('header-logout-btn')?.addEventListener('click', () => {
+    userDropdown?.classList.add('hidden')
+    logout()
+  })
+
+  // Sidebar logout button
+  document.getElementById('sidebar-logout-btn')?.addEventListener('click', () => {
+    logout()
+  })
+
+  // Dark mode toggle
+  const darkModeToggle = document.getElementById('dark-mode-toggle')
+  const sunIcon = document.getElementById('sun-icon')
+  const moonIcon = document.getElementById('moon-icon')
+
+  function updateDarkModeIcon() {
+    const isDark = document.documentElement.classList.contains('dark')
+    sunIcon?.classList.toggle('hidden', !isDark)
+    moonIcon?.classList.toggle('hidden', isDark)
+  }
+
+  darkModeToggle?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark')
+    state.set('darkMode', isDark)
+    updateDarkModeIcon()
+  })
+
+  // Initialize dark mode icon state
+  updateDarkModeIcon()
 }
 
 // ─── Utilities exposed globally for modules ─────────────────

@@ -7,27 +7,28 @@ import { state } from './state.js'
 
 // ─── Route Map ──────────────────────────────────────────────
 const ROUTES = {
-  '/':                  { title: 'Dashboard',       module: () => import('./modules/dashboard/index.js') },
-  '/jamaah':            { title: 'Jamaah',          module: () => import('./modules/jamaah/index.js') },
-  '/jamaah/new':        { title: 'Jamaah Baru',      module: () => import('./modules/jamaah/form.js') },
-  '/jamaah/:id':        { title: 'Detail Jamaah',    module: () => import('./modules/jamaah/detail.js') },
-  '/jamaah/:id/edit':   { title: 'Edit Jamaah',      module: () => import('./modules/jamaah/edit.js') },
-  '/paket':             { title: 'Paket',            module: () => import('./modules/paket/index.js') },
-  '/paket/new':         { title: 'Paket Baru',       module: () => import('./modules/paket/form.js') },
-  '/paket/:id':         { title: 'Detail Paket',     module: () => import('./modules/paket/detail.js') },
-  '/paket/:id/edit':    { title: 'Edit Paket',       module: () => import('./modules/paket/form.js') },
-  '/paket/:id/laporan': { title: 'Laporan Paket',    module: () => import('./modules/paket/laporan.js') },
-  '/paket/:id/manifest':{ title: 'Manifest Paket',   module: () => import('./modules/paket/manifest.js') },
-  '/pembayaran':        { title: 'Pembayaran',       module: () => import('./modules/pembayaran/index.js') },
-  '/pembayaran/form':   { title: 'Input Pembayaran', module: () => import('./modules/pembayaran/form.js') },
-  '/pembayaran/:id':    { title: 'Detail Pembayaran',module: () => import('./modules/pembayaran/detail.js') },
-  '/pembayaran/:id/cicilan': { title: 'Jadwal Cicilan', module: () => import('./modules/pembayaran/cicilan.js') },
-  '/pembayaran/:id/kuitansi': { title: 'Kuitansi',    module: () => import('./modules/pembayaran/kuitansi.js') },
-  '/promo':             { title: 'Kode Promo',       module: () => import('./modules/promo/index.js') },
-  '/laporan':           { title: 'Laporan',         module: () => import('./modules/laporan/index.js') },
-  '/laporan/keuangan':  { title: 'Laporan Keuangan', module: () => import('./modules/laporan/keuangan.js') },
-  '/dokumen':           { title: 'Dokumen',          module: () => import('./modules/dokumen/index.js') },
-  '/pengaturan':        { title: 'Pengaturan',       module: () => import('./modules/pengaturan/index.js') },
+  '/':                  { title: 'Dashboard',       module: () => import('./modules/dashboard/index.js'), adminOnly: false },
+  '/login':             { title: 'Masuk',            module: () => import('./modules/auth/login.js'), guestOnly: true },
+  '/jamaah':            { title: 'Jamaah',          module: () => import('./modules/jamaah/index.js'), adminOnly: false },
+  '/jamaah/new':        { title: 'Jamaah Baru',      module: () => import('./modules/jamaah/form.js'), adminOnly: false },
+  '/jamaah/:id':        { title: 'Detail Jamaah',    module: () => import('./modules/jamaah/detail.js'), adminOnly: false },
+  '/jamaah/:id/edit':   { title: 'Edit Jamaah',      module: () => import('./modules/jamaah/edit.js'), adminOnly: false },
+  '/paket':             { title: 'Paket',            module: () => import('./modules/paket/index.js'), adminOnly: false },
+  '/paket/new':         { title: 'Paket Baru',       module: () => import('./modules/paket/form.js'), adminOnly: false },
+  '/paket/:id':         { title: 'Detail Paket',     module: () => import('./modules/paket/detail.js'), adminOnly: false },
+  '/paket/:id/edit':    { title: 'Edit Paket',       module: () => import('./modules/paket/form.js'), adminOnly: false },
+  '/paket/:id/laporan': { title: 'Laporan Paket',    module: () => import('./modules/paket/laporan.js'), adminOnly: false },
+  '/paket/:id/manifest':{ title: 'Manifest Paket',   module: () => import('./modules/paket/manifest.js'), adminOnly: false },
+  '/pembayaran':        { title: 'Pembayaran',       module: () => import('./modules/pembayaran/index.js'), adminOnly: false },
+  '/pembayaran/form':   { title: 'Input Pembayaran', module: () => import('./modules/pembayaran/form.js'), adminOnly: false },
+  '/pembayaran/:id':    { title: 'Detail Pembayaran',module: () => import('./modules/pembayaran/detail.js'), adminOnly: false },
+  '/pembayaran/:id/cicilan': { title: 'Jadwal Cicilan', module: () => import('./modules/pembayaran/cicilan.js'), adminOnly: false },
+  '/pembayaran/:id/kuitansi': { title: 'Kuitansi',    module: () => import('./modules/pembayaran/kuitansi.js'), adminOnly: false },
+  '/promo':             { title: 'Kode Promo',       module: () => import('./modules/promo/index.js'), adminOnly: true },
+  '/laporan':           { title: 'Laporan',         module: () => import('./modules/laporan/index.js'), adminOnly: false },
+  '/laporan/keuangan':  { title: 'Laporan Keuangan', module: () => import('./modules/laporan/keuangan.js'), adminOnly: false },
+  '/dokumen':           { title: 'Dokumen',          module: () => import('./modules/dokumen/index.js'), adminOnly: false },
+  '/pengaturan':        { title: 'Pengaturan',       module: () => import('./modules/pengaturan/index.js'), adminOnly: true },
 }
 
 // ─── Init ──────────────────────────────────────────────────
@@ -61,9 +62,23 @@ async function handleRoute() {
   const { route, args } = matched
 
   // Guard: require auth for all routes (skip for /login)
-  if (!state.isAuthenticated && path !== '/login') {
-    window.location.hash = '#/login'
-    return
+  if (path !== '/login') {
+    if (!state.isAuthenticated) {
+      window.location.hash = '#/login'
+      return
+    }
+    // Admin-only routes
+    if (route.adminOnly && state.user?.role !== 'admin') {
+      window.location.hash = '#/'
+      window.showToast?.('Anda tidak memiliki akses ke halaman tersebut', 'error')
+      return
+    }
+  } else {
+    // Redirect to dashboard if already logged in
+    if (state.isAuthenticated) {
+      window.location.hash = '#/'
+      return
+    }
   }
 
   // Same route? skip

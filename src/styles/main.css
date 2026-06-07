@@ -12,6 +12,14 @@
   }
 
   h1, h2, h3 { @apply font-heading font-semibold text-gray-900; }
+
+  /* Dark mode base styles */
+  .dark {
+    color-scheme: dark;
+  }
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
 }
 
 /* ─── Components ────────────────────────────────────────── */
@@ -20,6 +28,9 @@
   /* Card */
   .card {
     @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+  .dark .card {
+    @apply bg-gray-800 border-gray-700;
   }
 
   /* Button variants */
@@ -37,8 +48,14 @@
     @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200
            focus-visible:ring-gray-400;
   }
+  .dark .btn-secondary {
+    @apply bg-gray-700 text-gray-200 hover:bg-gray-600;
+  }
   .btn-ghost {
     @apply btn bg-transparent text-gray-600 hover:bg-gray-100;
+  }
+  .dark .btn-ghost {
+    @apply text-gray-300 hover:bg-gray-700;
   }
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700
@@ -60,9 +77,20 @@
   .badge-gray    { @apply badge bg-gray-100 text-gray-700; }
   .badge-gold    { @apply badge bg-gold-100 text-gold-700; }
 
+  /* Dark mode badges */
+  .dark .badge-success { @apply bg-green-900/30 text-green-400; }
+  .dark .badge-warning { @apply bg-yellow-900/30 text-yellow-400; }
+  .dark .badge-danger  { @apply bg-red-900/30 text-red-400; }
+  .dark .badge-info    { @apply bg-blue-900/30 text-blue-400; }
+  .dark .badge-gray    { @apply bg-gray-700 text-gray-300; }
+  .dark .badge-gold    { @apply bg-gold-900/30 text-gold-400; }
+
   /* Form inputs */
   .form-label {
     @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  .dark .form-label {
+    @apply text-gray-300;
   }
   .form-input {
     @apply w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
@@ -70,10 +98,18 @@
            focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
            transition-colors;
   }
+  .dark .form-input {
+    @apply bg-gray-700 border-gray-600 text-gray-100
+           placeholder-gray-400
+           focus:border-primary-400 focus:ring-primary-400/20;
+  }
   .form-select {
     @apply form-input appearance-none bg-white bg-no-repeat bg-right
            pr-8 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')]
            bg-[length:1.25rem] bg-[position:right_0.5rem_center];
+  }
+  .dark .form-select {
+    @apply bg-gray-700 bg-no-repeat bg-right;
   }
   .form-textarea {
     @apply form-input resize-none;
@@ -81,30 +117,54 @@
   .form-error {
     @apply text-red-600 text-xs mt-1 flex items-center gap-1;
   }
+  .dark .form-error {
+    @apply text-red-400;
+  }
 
   /* Table */
   .table-container {
     @apply overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm;
   }
+  .dark .table-container {
+    @apply bg-gray-800 border-gray-700;
+  }
   .table {
     @apply min-w-full divide-y divide-gray-100;
+  }
+  .dark .table {
+    @apply divide-gray-700;
   }
   .table thead {
     @apply bg-gray-50;
   }
+  .dark .table thead {
+    @apply bg-gray-700/50;
+  }
   .table th {
     @apply px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider;
+  }
+  .dark .table th {
+    @apply text-gray-400;
   }
   .table td {
     @apply px-4 py-3 text-sm text-gray-700;
   }
+  .dark .table td {
+    @apply text-gray-300;
+  }
   .table tbody tr {
     @apply hover:bg-gray-50 transition-colors;
+  }
+  .dark .table tbody tr {
+    @apply hover:bg-gray-700/50;
   }
 
   /* Skeleton loader */
   .skeleton {
     @apply animate-pulse bg-gray-200 rounded;
+  }
+  .dark .skeleton {
+    @apply bg-gray-700;
   }
 
   /* Modal backdrop */
@@ -117,11 +177,17 @@
   .modal-header {
     @apply flex items-center justify-between p-4 border-b border-gray-100;
   }
+  .dark .modal-header {
+    @apply border-gray-700;
+  }
   .modal-body {
     @apply p-4;
   }
   .modal-footer {
     @apply flex items-center justify-end gap-2 p-4 border-t border-gray-100;
+  }
+  .dark .modal-footer {
+    @apply border-gray-700;
   }
 }
 
@@ -133,4 +199,77 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { @apply bg-gray-100 rounded; }
   ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded hover:bg-gray-400; }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-track { @apply bg-gray-800 rounded; }
+  .dark ::-webkit-scrollbar-thumb { @apply bg-gray-600 rounded hover:bg-gray-500; }
+}
+
+/* ─── Mobile Responsiveness ──────────────────────────────── */
+/* sm: 640px, md: 768px, lg: 1024px */
+
+/* Mobile: Full width forms */
+@media (max-width: 639px) {
+  .form-input,
+  .form-select,
+  .form-textarea {
+    @apply w-full;
+  }
+
+  .card {
+    @apply rounded-none border-l-0 border-r-0;
+  }
+
+  /* Stack cards vertically on mobile */
+  .grid > .card {
+    @apply mb-4;
+  }
+
+  /* Full width buttons on mobile */
+  .btn {
+    @apply w-full justify-center;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 640px) and (max-width: 767px) {
+  /* ... */
+}
+
+/* Mobile nav safe area */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Hide scrollbar on mobile nav */
+.mobile-nav-container::-webkit-scrollbar {
+  display: none;
+}
+.mobile-nav-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Dark Mode Overrides ─────────────────────────────────── */
+/* These override default Tailwind classes when dark mode is active */
+.dark body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+.dark h1, .dark h2, .dark h3 {
+  color: #f9fafb;
+}
+
+/* Ensure dark inputs */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark ::placeholder {
+  color: #9ca3af;
 }
