@@ -1,22 +1,33 @@
 /**
- * Nusantara CRM — Hash-based SPA Router (T-04)
- * Routes: /, /jamaah, /jamaah/:id, /paket, /pembayaran,
+ * Nusantara CRM — Hash-based SPA Router (T-04, T-17 to T-28)
+ * Routes: /, /jamaah, /jamaah/:id, /paket, /paket/:id, /pembayaran,
  *         /dokumen, /laporan, /pengaturan
  */
 import { state } from './state.js'
 
 // ─── Route Map ──────────────────────────────────────────────
 const ROUTES = {
-  '/':              { title: 'Dashboard',    module: () => import('./modules/dashboard/index.js') },
-  '/jamaah':        { title: 'Jamaah',     module: () => import('./modules/jamaah/index.js') },
-  '/jamaah/new':    { title: 'Jamaah Baru', module: () => import('./modules/jamaah/form.js') },
-  '/jamaah/:id':    { title: 'Detail Jamaah', module: () => import('./modules/jamaah/detail.js') },
-  '/jamaah/:id/edit': { title: 'Edit Jamaah', module: () => import('./modules/jamaah/edit.js') },
-  '/paket':         { title: 'Paket',       module: () => import('./modules/paket/index.js') },
-  '/pembayaran':    { title: 'Pembayaran',  module: () => import('./modules/pembayaran/index.js') },
-  '/dokumen':       { title: 'Dokumen',     module: () => import('./modules/dokumen/index.js') },
-  '/laporan':       { title: 'Laporan',     module: () => import('./modules/laporan/index.js') },
-  '/pengaturan':    { title: 'Pengaturan',  module: () => import('./modules/pengaturan/index.js') },
+  '/':                  { title: 'Dashboard',       module: () => import('./modules/dashboard/index.js') },
+  '/jamaah':            { title: 'Jamaah',          module: () => import('./modules/jamaah/index.js') },
+  '/jamaah/new':        { title: 'Jamaah Baru',      module: () => import('./modules/jamaah/form.js') },
+  '/jamaah/:id':        { title: 'Detail Jamaah',    module: () => import('./modules/jamaah/detail.js') },
+  '/jamaah/:id/edit':   { title: 'Edit Jamaah',      module: () => import('./modules/jamaah/edit.js') },
+  '/paket':             { title: 'Paket',            module: () => import('./modules/paket/index.js') },
+  '/paket/new':         { title: 'Paket Baru',       module: () => import('./modules/paket/form.js') },
+  '/paket/:id':         { title: 'Detail Paket',     module: () => import('./modules/paket/detail.js') },
+  '/paket/:id/edit':    { title: 'Edit Paket',       module: () => import('./modules/paket/form.js') },
+  '/paket/:id/laporan': { title: 'Laporan Paket',    module: () => import('./modules/paket/laporan.js') },
+  '/paket/:id/manifest':{ title: 'Manifest Paket',   module: () => import('./modules/paket/manifest.js') },
+  '/pembayaran':        { title: 'Pembayaran',       module: () => import('./modules/pembayaran/index.js') },
+  '/pembayaran/form':   { title: 'Input Pembayaran', module: () => import('./modules/pembayaran/form.js') },
+  '/pembayaran/:id':    { title: 'Detail Pembayaran',module: () => import('./modules/pembayaran/detail.js') },
+  '/pembayaran/:id/cicilan': { title: 'Jadwal Cicilan', module: () => import('./modules/pembayaran/cicilan.js') },
+  '/pembayaran/:id/kuitansi': { title: 'Kuitansi',    module: () => import('./modules/pembayaran/kuitansi.js') },
+  '/promo':             { title: 'Kode Promo',       module: () => import('./modules/promo/index.js') },
+  '/laporan':           { title: 'Laporan',         module: () => import('./modules/laporan/index.js') },
+  '/laporan/keuangan':  { title: 'Laporan Keuangan', module: () => import('./modules/laporan/keuangan.js') },
+  '/dokumen':           { title: 'Dokumen',          module: () => import('./modules/dokumen/index.js') },
+  '/pengaturan':        { title: 'Pengaturan',       module: () => import('./modules/pengaturan/index.js') },
 }
 
 // ─── Init ──────────────────────────────────────────────────
