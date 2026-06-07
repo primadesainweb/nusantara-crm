@@ -7,7 +7,7 @@ import api from '../../api/api.js'
 import { showToast } from '../../utils/helpers.js'
 import { canAccess } from '../../utils/rbac.js'
 
-const API_BASE = 'http://103.49.238.10:3001'
+const API_BASE = '/api'
 
 export default class PengaturanView {
   constructor() {

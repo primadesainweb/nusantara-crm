@@ -267,7 +267,7 @@ export default class PromoView {
 
     try {
       // Use direct fetch to avoid api wrapper issues with promo
-      const BASE_URL = 'http://103.49.238.10:3001'
+      const BASE_URL = '/api'
       if (id) {
         await fetch(`${BASE_URL}/promo/${id}`, {
           method: 'PATCH',
@@ -293,7 +293,7 @@ export default class PromoView {
 
   async deletePromo(id) {
     try {
-      const BASE_URL = 'http://103.49.238.10:3001'
+      const BASE_URL = '/api'
       await fetch(`${BASE_URL}/promo/${id}`, { method: 'DELETE' })
       showToast('Promo berhasil dihapus!', 'success')
       await this.loadData()

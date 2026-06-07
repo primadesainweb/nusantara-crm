@@ -4,7 +4,7 @@
  */
 import { state } from '../state.js'
 
-const BASE_URL = 'http://103.49.238.10:3001'  // JSON Server Production
+const BASE_URL = '/api'  // Production: same origin
 
 // ─── Core Fetch ─────────────────────────────────────────────
 async function apiFetch(endpoint, options = {}) {
