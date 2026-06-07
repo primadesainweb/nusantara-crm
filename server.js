@@ -4,7 +4,9 @@
  * Run: node server.js
  * API base: http://localhost:3001
  */
-import { create, router, bodyParser, rewriter } from 'json-server'
+import jsonServer from 'json-server'
+const { create, router, rewriter } = jsonServer
+const bodyParser = jsonServer.bodyParser
 
 const server = create()
 
@@ -24,7 +26,7 @@ import { dirname, join } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const db = JSON.parse(readFileSync(join(__dirname, 'src/data/db.json'), 'utf-8'))
 
-// Routes
+// Routes rewriter - put BEFORE custom endpoints so they take priority
 const routes = {
   '/api/jamaah': '/jamaah',
   '/api/paket': '/paket',
@@ -37,10 +39,25 @@ const routes = {
 }
 server.use(rewriter(routes))
 
-// Custom stats endpoint
+// Custom stats endpoint - register AFTER rewriter so /api/stats matches here
+server.get('/stats', (req, res) => {
+  const today = new Date().toISOString().slice(0, 7)
+  const bulanIni = db.transaksi.filter(t => t.tanggal && t.tanggal.startsWith(today) && t.status === 'lunas')
+  const totalPendapatan = bulanIni.reduce((s, t) => s + (t.nominal || 0), 0)
+
+  res.jsonp({
+    jamaat: db.jamaah.filter(j => !j.deletedAt),
+    pakets: db.paket,
+    transaksis: db.transaksi,
+    pembayarans: db.pembayaran,
+    bulanIniPendapatan: totalPendapatan,
+  })
+})
+
+// Also support /api/stats directly for JSON Server
 server.get('/api/stats', (req, res) => {
   const today = new Date().toISOString().slice(0, 7)
-  const bulanIni = db.transaksi.filter(t => t.tanggal?.startsWith(today) && t.status === 'lunas')
+  const bulanIni = db.transaksi.filter(t => t.tanggal && t.tanggal.startsWith(today) && t.status === 'lunas')
   const totalPendapatan = bulanIni.reduce((s, t) => s + (t.nominal || 0), 0)
 
   res.jsonp({

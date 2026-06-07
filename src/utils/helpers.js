@@ -1,7 +1,7 @@
 /**
  * Nusantara CRM — Utility Functions (T-06)
  */
-import { format } from './date.js'
+import { formatDate } from './date.js'
 
 // ─── Currency ───────────────────────────────────────────────
 export function formatRupiah(num) {

@@ -7,60 +7,7 @@ import { state } from './state.js'
 import { showToast } from './utils/helpers.js'
 import { logout } from './modules/auth/login.js'
 
-// ─── Init ──────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('�起来了 — Nusantara CRM initializing...')
-
-  // Hydrate state from localStorage (auth, preferences) first
-  state.hydrate()
-
-  // Render app shell (sidebar + header + router outlet)
-  renderAppShell()
-
-  // Initialize hash-based SPA router
-  initRouter()
-
-  console.log('✅ CRM ready')
-})
-
-// ─── App Shell ─────────────────────────────────────────────
-function renderAppShell() {
-  const app = document.getElementById('app')
-  app.innerHTML = `
-    <div class="flex h-screen overflow-hidden">
-      <!-- Sidebar -->
-      <aside id="sidebar" class="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0">
-        ${renderSidebar()}
-      </aside>
-
-      <!-- Main Area -->
-      <div class="flex flex-1 flex-col overflow-hidden">
-        <!-- Header -->
-        <header id="app-header" class="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4 shrink-0">
-          ${renderHeader()}
-        </header>
-
-        <!-- Page content -->
-        <main id="router-view" class="flex-1 overflow-y-auto bg-gray-50 p-6">
-          <!-- route content injected here -->
-        </main>
-      </div>
-    </div>
-
-    <!-- Mobile sidebar overlay -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
-
-    <!-- Mobile Bottom Nav -->
-    <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 flex items-center justify-around py-2 px-4 safe-area-inset-bottom">
-      ${renderMobileNav()}
-    </nav>
-  `
-
-  // Attach sidebar toggle listeners
-  attachSidebarListeners()
-}
-
-// ─── Sidebar ────────────────────────────────────────────────
+// ─── Constants (defined FIRST to avoid TDZ issues) ─────────────
 const NAV_ITEMS = [
   { path: '#/',        label: 'Dashboard',  icon: 'home',       badge: null },
   { path: '#/jamaah', label: 'Jamaah',    icon: 'users',     badge: null },
@@ -81,12 +28,22 @@ const ICONS = {
   settings:    `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
   menu:        `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>`,
   x:          `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
-  search:     `<svg class="w-5 h-5" shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>`,
+  search:     `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>`,
   bell:       `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`,
   plus:       `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>`,
   'user-circle': `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
 }
 
+// ─── Utilities ────────────────────────────────────────────────
+function debounce(fn, ms = 300) {
+  let timer
+  return (...args) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), ms)
+  }
+}
+
+// ─── Render Functions ────────────────────────────────────────
 function renderSidebar() {
   const user = state.user
   const initials = user?.name ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?'
@@ -220,7 +177,41 @@ function renderMobileNav() {
   `).join('')
 }
 
-// ─── Sidebar Toggle Logic ───────────────────────────────────
+function renderAppShell() {
+  const app = document.getElementById('app')
+  app.innerHTML = `
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0">
+        ${renderSidebar()}
+      </aside>
+
+      <!-- Main Area -->
+      <div class="flex flex-1 flex-col overflow-hidden">
+        <!-- Header -->
+        <header id="app-header" class="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4 shrink-0">
+          ${renderHeader()}
+        </header>
+
+        <!-- Page content -->
+        <main id="router-view" class="flex-1 overflow-y-auto bg-gray-50 p-6">
+          <!-- route content injected here -->
+        </main>
+      </div>
+    </div>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 flex items-center justify-around py-2 px-4 safe-area-inset-bottom">
+      ${renderMobileNav()}
+    </nav>
+  `
+
+  attachSidebarListeners()
+}
+
 function attachSidebarListeners() {
   const toggle  = document.getElementById('sidebar-toggle')
   const overlay = document.getElementById('sidebar-overlay')
@@ -264,21 +255,15 @@ function attachSidebarListeners() {
     e.stopPropagation()
     userDropdown?.classList.toggle('hidden')
   })
-  document.addEventListener('click', () => {
-    userDropdown?.classList.add('hidden')
-  })
+  document.addEventListener('click', () => userDropdown?.classList.add('hidden'))
   userDropdown?.addEventListener('click', (e) => e.stopPropagation())
 
-  // Header logout button
+  // Logout buttons
   document.getElementById('header-logout-btn')?.addEventListener('click', () => {
     userDropdown?.classList.add('hidden')
     logout()
   })
-
-  // Sidebar logout button
-  document.getElementById('sidebar-logout-btn')?.addEventListener('click', () => {
-    logout()
-  })
+  document.getElementById('sidebar-logout-btn')?.addEventListener('click', () => logout())
 
   // Dark mode toggle
   const darkModeToggle = document.getElementById('dark-mode-toggle')
@@ -297,20 +282,27 @@ function attachSidebarListeners() {
     updateDarkModeIcon()
   })
 
-  // Initialize dark mode icon state
   updateDarkModeIcon()
 }
 
-// ─── Utilities exposed globally for modules ─────────────────
-function debounce(fn, ms) {
-  let timer
-  return (...args) => {
-    clearTimeout(timer)
-    timer = setTimeout(() => fn(...args), ms)
-  }
+// ─── Bootstrap ───────────────────────────────────────────────
+async function bootstrap() {
+  console.log('🚀 Nusantara CRM initializing...')
+
+  state.hydrate()
+  renderAppShell()
+  initRouter()
+
+  console.log('✅ CRM ready')
 }
 
-// Expose to window so modules can use
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrap)
+} else {
+  bootstrap()
+}
+
+// ─── Expose globals ───────────────────────────────────────────
 window.showToast = showToast
 window.debounce = debounce
 
